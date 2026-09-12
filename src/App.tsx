@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import './App.css'
-import Game from './components/Game';
+import Game from './components/Game/Game';
+import Fieldset from './components/Fieldset/Fieldset';
 
 interface IGame {
   gameId: string;
-  gameTitle:string;
+  gameTitle: string;
   gameCover: string;
 }
 
@@ -13,7 +14,12 @@ function App() {
     const savedGames = localStorage.getItem("games-lib")
 
     if (savedGames) {
-      return JSON.parse(savedGames)
+      try {
+        return JSON.parse(savedGames)
+      } catch (error) {
+        console.error("Erro ao ler localStorage:", error)
+        return []
+      }
     }
 
     return []
@@ -22,7 +28,7 @@ function App() {
   const [gameTitle, setGameTitle] = useState("")
   const [gameCover, setGameCover] = useState("")
 
-  const handleSubmit = (ev: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = (ev: React.FormEvent<HTMLFormElement>) => {
     ev.preventDefault()
     if (!gameTitle.trim() || !gameCover.trim()) return
 
@@ -46,7 +52,11 @@ function App() {
   }
 
   function removeGame(id: string) {
-    setGamesList(prev => prev.filter(g => g.gameId !== id))
+    setGamesList(prev => {
+      const updatedGameList = prev.filter(g => g.gameId !== id)
+      localStorage.setItem("games-lib", JSON.stringify(updatedGameList))
+      return updatedGameList
+    })
   }
 
   return (
@@ -54,28 +64,31 @@ function App() {
       <h1>Biblioteca de Jogos</h1>
       <div className="lib-content">
         <form onSubmit={handleSubmit}>
-        <fieldset>
-          <legend>Adicione o seu jogo</legend>
           <fieldset>
-            <label htmlFor="gameTitle">Título do Jogo:</label>
-            <input type="text" id="gameTitle" value={gameTitle} onChange={(ev) => setGameTitle(ev.target.value)} required />
+            <legend>Adicione o seu jogo</legend>
+            <Fieldset id="gameTitle" labelValue="Título do Jogo:" inputValue={gameTitle} inputOnChangeFunc={setGameTitle}/>
+            <Fieldset id="gameCover" labelValue="Capa do Jogo:" inputValue={gameCover} inputOnChangeFunc={setGameCover}/>
+            <button type="submit">Adicionar</button>
           </fieldset>
-          <fieldset>
-            <label htmlFor="gameCover">Capa do Jogo (URL):</label>
-            <input type="text" id="gameCover" value={gameCover} onChange={(ev) => setGameCover(ev.target.value)} required />
-          </fieldset>
-          <button type="submit">Adicionar</button>
-        </fieldset>
         </form>
       </div>
       <div className="lib-games">
-      <h2>Lista de Jogos</h2>     
-      <div>
-        {gamesList.map(g => (
-          <Game id={g.gameId} title={g.gameTitle} cover={g.gameCover} onRemove={removeGame} />
-        ))}
-      </div>
-
+        <h2>Lista de Jogos</h2>
+        <div className="game-list">
+          {gamesList.length === 0 ? (
+            <p className="empty-state">Nenhum jogo cadastrado ainda.</p>
+          ) : (
+            gamesList.map(g => (
+              <Game 
+                key={g.gameId} 
+                id={g.gameId} 
+                title={g.gameTitle} 
+                cover={g.gameCover} 
+                onRemove={removeGame} 
+              />
+            ))
+          )}
+        </div>
       </div>
     </main>
   )
