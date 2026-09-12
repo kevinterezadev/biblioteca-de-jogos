@@ -1,121 +1,83 @@
 import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
 import './App.css'
+import Game from './components/Game';
+
+interface IGame {
+  gameId: string;
+  gameTitle:string;
+  gameCover: string;
+}
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [gamesList, setGamesList] = useState<IGame[]>(() => {
+    const savedGames = localStorage.getItem("games-lib")
+
+    if (savedGames) {
+      return JSON.parse(savedGames)
+    }
+
+    return []
+  })
+
+  const [gameTitle, setGameTitle] = useState("")
+  const [gameCover, setGameCover] = useState("")
+
+  const handleSubmit = (ev: React.SubmitEvent<HTMLFormElement>) => {
+    ev.preventDefault()
+    if (!gameTitle.trim() || !gameCover.trim()) return
+
+    addNewGame(gameTitle, gameCover)
+    setGameTitle("")
+    setGameCover("")
+  }
+
+  function addNewGame(name: string, cover: string) {
+    const newGame = {
+      gameId: crypto.randomUUID(),
+      gameTitle: name,
+      gameCover: cover
+    }
+
+    setGamesList(prev => {
+      const newList = [...prev, newGame]
+      localStorage.setItem("games-lib", JSON.stringify(newList))
+      return newList
+    })
+  }
+
+  function removeGame(id: string) {
+    setGamesList(prev => prev.filter(g => g.gameId !== id))
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <main id="app">
+      <h1>Biblioteca de Jogos</h1>
+      <div className="lib-content">
+        <form onSubmit={handleSubmit}>
+        <fieldset>
+          <legend>Adicione o seu jogo</legend>
+          <fieldset>
+            <label htmlFor="gameTitle">Título do Jogo:</label>
+            <input type="text" id="gameTitle" value={gameTitle} onChange={(ev) => setGameTitle(ev.target.value)} required />
+          </fieldset>
+          <fieldset>
+            <label htmlFor="gameCover">Capa do Jogo (URL):</label>
+            <input type="text" id="gameCover" value={gameCover} onChange={(ev) => setGameCover(ev.target.value)} required />
+          </fieldset>
+          <button type="submit">Adicionar</button>
+        </fieldset>
+        </form>
+      </div>
+      <div className="lib-games">
+      <h2>Lista de Jogos</h2>     
+      <div>
+        {gamesList.map(g => (
+          <Game id={g.gameId} title={g.gameTitle} cover={g.gameCover} onRemove={removeGame} />
+        ))}
+      </div>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      </div>
+    </main>
   )
 }
 
